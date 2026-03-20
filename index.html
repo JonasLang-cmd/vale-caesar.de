@@ -1,0 +1,466 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caesars Zorn - Latein-Formen-Trainer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Fauna+One&display=swap');
+
+        :root {
+            --roman-red: #8B0000;
+            --roman-gold: #FFD700;
+            --marble-white: #f5f5f5;
+        }
+
+        body {
+            font-family: 'Fauna+One', serif;
+            background-color: #1a1a1a;
+            color: #333;
+            overflow: hidden;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1, h2 {
+            font-family: 'Cinzel', serif;
+        }
+
+        .game-wrapper {
+            width: 100%;
+            max-width: 600px;
+            height: 100%;
+            background: linear-gradient(to bottom, #4a5568, #2d3748);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            border-left: 8px solid var(--roman-gold);
+            border-right: 8px solid var(--roman-gold);
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+        }
+
+        .screen {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+            transition: opacity 0.5s ease;
+        }
+
+        .hidden {
+            display: none;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #start-menu {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: rgba(0,0,0,0.4);
+        }
+
+        .menu-card {
+            background: var(--marble-white);
+            padding: 40px;
+            border-radius: 15px;
+            border: 4px double var(--roman-gold);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .speech-bubble {
+            position: relative;
+            background: white;
+            border-radius: .4em;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            text-align: center;
+            font-size: 1.2rem;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .speech-bubble:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border: 20px solid transparent;
+            border-top-color: white;
+            border-bottom: 0;
+            margin-left: -20px;
+            margin-bottom: -20px;
+        }
+
+        /* Gestiegener Abstand für die Buttons */
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 25px; /* Erhöhter Abstand */
+            margin-top: 40px;
+            margin-bottom: 20px;
+            z-index: 10;
+            padding: 0 20px;
+        }
+
+        .option-btn, .start-btn {
+            background: var(--marble-white);
+            border: 2px solid var(--roman-gold);
+            padding: 18px;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
+            font-family: 'Cinzel', serif;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .option-btn:hover, .start-btn:hover {
+            background: var(--roman-gold);
+            color: black;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+
+        .caesar-container {
+            position: relative;
+            height: 250px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            margin-top: auto;
+        }
+
+        .caesar {
+            width: 180px;
+            height: 220px;
+            position: relative;
+        }
+
+        .caesar-head {
+            width: 70px;
+            height: 80px;
+            background: #ffdbac;
+            border-radius: 50% 50% 40% 40%;
+            position: absolute;
+            top: 20px;
+            left: 55px;
+            border: 2px solid #555;
+            z-index: 5;
+        }
+
+        .caesar-laurel {
+            position: absolute;
+            top: 15px;
+            left: 50px;
+            width: 80px;
+            height: 30px;
+            z-index: 6;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .laurel-leaf {
+            width: 12px;
+            height: 8px;
+            background: #2d5a27;
+            border-radius: 50%;
+        }
+
+        .caesar-eye {
+            width: 8px;
+            height: 8px;
+            background: black;
+            border-radius: 50%;
+            position: absolute;
+            top: 35px;
+        }
+
+        .eye-left { left: 18px; }
+        .eye-right { right: 18px; }
+
+        .caesar-mouth {
+            width: 25px;
+            height: 4px;
+            background: #8b0000;
+            position: absolute;
+            bottom: 18px;
+            left: 22px;
+            border-radius: 5px;
+        }
+
+        .angry .caesar-mouth {
+            height: 12px;
+            border-radius: 50% 50% 0 0;
+            background: #000;
+        }
+
+        .angry .caesar-head {
+            background: #ff9999;
+            animation: shake 0.1s infinite;
+        }
+
+        .caesar-toga {
+            width: 120px;
+            height: 130px;
+            background: white;
+            position: absolute;
+            bottom: 0;
+            left: 30px;
+            border-radius: 40% 40% 10% 10%;
+            border: 1px solid #ddd;
+            overflow: hidden;
+        }
+
+        .toga-stripe {
+            width: 25px;
+            height: 100%;
+            background: var(--roman-red);
+            position: absolute;
+            left: 15px;
+            transform: skewX(-10deg);
+        }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px); }
+            50% { transform: translate(-1px, -1px); }
+            100% { transform: translate(1px, -1px); }
+        }
+
+        .score-board {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            color: white;
+            font-size: 1.1rem;
+            background: rgba(0,0,0,0.6);
+            padding: 8px 20px;
+            border-radius: 30px;
+            border: 1px solid var(--roman-gold);
+            z-index: 50;
+        }
+
+        .feedback-overlay {
+            position: absolute;
+            top: 35%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3.5rem;
+            font-weight: bold;
+            pointer-events: none;
+            opacity: 0;
+            z-index: 100;
+            text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+            font-family: 'Cinzel', serif;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-wrapper">
+    <!-- START MENÜ -->
+    <div id="start-menu" class="screen">
+        <div class="menu-card">
+            <h1 class="text-3xl mb-4 font-bold text-red-900">Salve servus!</h1>
+            <p class="mb-8 italic text-gray-700">Caesar prüft dein Wissen. Wähle weise, oder die Löwen warten schon!</p>
+            <button class="start-btn w-full py-4" onclick="startGame()">Spiel Starten</button>
+        </div>
+    </div>
+
+    <!-- SPIEL BEREICH -->
+    <div id="game-screen" class="screen hidden">
+        <div class="score-board">Gunst: <span id="score">50</span>%</div>
+        
+        <div class="feedback-overlay" id="feedback"></div>
+
+        <div class="speech-bubble" id="caesarSpeech">
+            Lade Herausforderung...
+        </div>
+
+        <div class="options-container" id="options">
+            <!-- Dynamische Buttons -->
+        </div>
+
+        <div class="caesar-container">
+            <div class="caesar" id="caesarBody">
+                <div class="caesar-laurel">
+                    <div class="laurel-leaf"></div>
+                    <div class="laurel-leaf" style="transform: rotate(30deg)"></div>
+                </div>
+                <div class="caesar-head">
+                    <div class="caesar-eye eye-left"></div>
+                    <div class="caesar-eye eye-right"></div>
+                    <div class="caesar-mouth"></div>
+                </div>
+                <div class="caesar-toga">
+                    <div class="toga-stripe"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Großer Pool an Daten für Zufallsgenerierung
+    const pool = {
+        substantive: [
+            { nom: "amicus", gen: "amici", dat: "amico", akk: "amicum", abl: "amico", voc: "amce" },
+            { nom: "servus", gen: "servi", dat: "servo", akk: "servum", abl: "servo", voc: "serve" },
+            { nom: "templum", gen: "templi", dat: "templo", akk: "templum", abl: "templo", voc: "templum" },
+            { nom: "puella", gen: "puellae", dat: "puellae", akk: "puellam", abl: "puella", voc: "puella" },
+            { nom: "rex", gen: "regis", dat: "regi", akk: "regem", abl: "rege", voc: "rex" },
+            { nom: "virtus", gen: "virtutis", dat: "virtuti", akk: "virtutem", abl: "virtute", voc: "virtus" }
+        ],
+        verben: [
+            { inf: "amare", p1s: "amo", p2s: "amas", p3s: "amat", p1p: "amamus", p2p: "amatis", p3p: "amant" },
+            { inf: "videre", p1s: "video", p2s: "vides", p3s: "videt", p1p: "videmus", p2p: "videtis", p3p: "vident" },
+            { inf: "vincere", p1s: "vinco", p2s: "vincis", p3s: "vincit", p1p: "vincimus", p2p: "vincitis", p3p: "vincunt" },
+            { inf: "audire", p1s: "audio", p2s: "audis", p3s: "audit", p1p: "audimus", p2p: "auditis", p3p: "audiunt" }
+        ]
+    };
+
+    let currentScore = 50;
+    let currentCorrectAnswer = "";
+
+    const startMenu = document.getElementById('start-menu');
+    const gameScreen = document.getElementById('game-screen');
+    const speechEl = document.getElementById('caesarSpeech');
+    const optionsEl = document.getElementById('options');
+    const scoreEl = document.getElementById('score');
+    const caesarEl = document.getElementById('caesarBody');
+    const feedbackEl = document.getElementById('feedback');
+
+    function startGame() {
+        startMenu.classList.add('hidden');
+        gameScreen.classList.remove('hidden');
+        currentScore = 50;
+        scoreEl.innerText = currentScore;
+        nextQuestion();
+    }
+
+    function nextQuestion() {
+        if (currentScore <= 0) {
+            endGame("In die Arena mit dir! Du hast versagt.");
+            return;
+        }
+        if (currentScore >= 100) {
+            endGame("Du bist ein wahrer Römer! Ich ernenne dich zum Senator.");
+            return;
+        }
+
+        // Zufälligen Typ wählen (Substantiv oder Verb)
+        const isNoun = Math.random() > 0.5;
+        let questionData = {};
+        let options = [];
+
+        if (isNoun) {
+            const item = pool.substantive[Math.floor(Math.random() * pool.substantive.length)];
+            const cases = ["gen", "dat", "akk", "abl"];
+            const selectedCase = cases[Math.floor(Math.random() * cases.length)];
+            const caseNames = { gen: "Genitiv", dat: "Dativ", akk: "Akkusativ", abl: "Ablativ" };
+            
+            questionData.prompt = `Gib mir den ${caseNames[selectedCase]} Singular von '${item.nom}'!`;
+            currentCorrectAnswer = item[selectedCase];
+            
+            // Falsche Antworten aus anderen Fällen desselben Wortes oder anderen Wörtern
+            options = [currentCorrectAnswer];
+            while(options.length < 3) {
+                let wrongCase = cases[Math.floor(Math.random() * cases.length)];
+                let wrongVal = item[wrongCase];
+                if (!options.includes(wrongVal)) options.push(wrongVal);
+            }
+        } else {
+            const item = pool.verben[Math.floor(Math.random() * pool.verben.length)];
+            const persons = ["p1s", "p2s", "p3s", "p1p", "p2p", "p3p"];
+            const selectedPerson = persons[Math.floor(Math.random() * persons.length)];
+            const personNames = { 
+                p1s: "1. Person Singular", p2s: "2. Person Singular", p3s: "3. Person Singular",
+                p1p: "1. Person Plural", p2p: "2. Person Plural", p3p: "3. Person Plural"
+            };
+            
+            questionData.prompt = `Konjugiere '${item.inf}': Ich will die ${personNames[selectedPerson]}!`;
+            currentCorrectAnswer = item[selectedPerson];
+            
+            options = [currentCorrectAnswer];
+            while(options.length < 3) {
+                let wrongPers = persons[Math.floor(Math.random() * persons.length)];
+                let wrongVal = item[wrongPers];
+                if (!options.includes(wrongVal)) options.push(wrongVal);
+            }
+        }
+
+        // Shuffle Options
+        options.sort(() => Math.random() - 0.5);
+
+        // UI Update
+        speechEl.innerText = `"${questionData.prompt}"`;
+        optionsEl.innerHTML = '';
+        
+        if (currentScore < 40) {
+            caesarEl.classList.add('angry');
+        } else {
+            caesarEl.classList.remove('angry');
+        }
+
+        options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = opt;
+            btn.onclick = () => checkAnswer(opt);
+            optionsEl.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(selected) {
+        if (selected === currentCorrectAnswer) {
+            showFeedback("Bonus!", "#48bb78");
+            currentScore += 10;
+        } else {
+            showFeedback("STULTUS!", "#f56565");
+            currentScore -= 15;
+        }
+
+        if (currentScore > 100) currentScore = 100;
+        if (currentScore < 0) currentScore = 0;
+        
+        scoreEl.innerText = currentScore;
+        setTimeout(nextQuestion, 500);
+    }
+
+    function showFeedback(text, color) {
+        feedbackEl.innerText = text;
+        feedbackEl.style.color = color;
+        feedbackEl.style.opacity = '1';
+        setTimeout(() => {
+            feedbackEl.style.opacity = '0';
+        }, 600);
+    }
+
+    function endGame(msg) {
+        optionsEl.innerHTML = '';
+        speechEl.innerText = msg;
+        const restartBtn = document.createElement('button');
+        restartBtn.className = 'option-btn w-full mt-8';
+        restartBtn.innerText = "Zurück zum Forum";
+        restartBtn.onclick = () => {
+            gameScreen.classList.add('hidden');
+            startMenu.classList.remove('hidden');
+        };
+        optionsEl.appendChild(restartBtn);
+    }
+</script>
+
+</body>
+</html>
